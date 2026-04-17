@@ -1,0 +1,45 @@
+import java.util.Scanner;
+public class PlayfairSimple {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter Key: ");
+        String key = sc.nextLine().toUpperCase().replace("J", "I").replaceAll("[^A-Z]", "");   
+        System.out.print("Enter Text: ");
+        String text = sc.nextLine().toUpperCase().replace("J", "I").replaceAll("[^A-Z]", "");
+        String matrix = "";
+        for (char c : (key + "ABCDEFGHIKLMNOPQRSTUVWXYZ").toCharArray()) {
+            if (matrix.indexOf(c) == -1) matrix += c; 
+        }
+        StringBuilder sb = new StringBuilder(text);
+        for (int i = 0; i < sb.length() - 1; i += 2) {
+            if (sb.charAt(i) == sb.charAt(i + 1)) sb.insert(i + 1, 'X');
+        }
+        if (sb.length() % 2 != 0) sb.append('X');
+        text = sb.toString();
+        String encrypted = process(text, matrix, 1); 
+        String decrypted = process(encrypted, matrix, 4); 
+        System.out.println("Formatted Text: " + text);
+        System.out.println("Encrypted:      " + encrypted);
+        System.out.println("Decrypted:      " + decrypted);
+    }
+    static String process(String text, String matrix, int shift) {
+        String result = "";
+        for (int i = 0; i < text.length(); i += 2) {
+            int p1 = matrix.indexOf(text.charAt(i));
+            int p2 = matrix.indexOf(text.charAt(i + 1));
+            int r1 = p1 / 5, c1 = p1 % 5;
+            int r2 = p2 / 5, c2 = p2 % 5;
+            if (r1 == r2) { 
+                result += matrix.charAt(r1 * 5 + (c1 + shift) % 5);
+                result += matrix.charAt(r2 * 5 + (c2 + shift) % 5);
+            } else if (c1 == c2) { 
+                result += matrix.charAt(((r1 + shift) % 5) * 5 + c1);
+                result += matrix.charAt(((r2 + shift) % 5) * 5 + c2);
+            } else { 
+                result += matrix.charAt(r1 * 5 + c2);
+                result += matrix.charAt(r2 * 5 + c1);
+            }
+        }
+        return result;
+    }
+}

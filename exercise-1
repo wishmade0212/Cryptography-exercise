@@ -1,0 +1,217 @@
+class affine1{
+        public static String en(char[] msg,int a,int b)
+        {
+                String c="";
+                for(int i=0;i<msg.length;i++)
+                {
+                        if(msg[i]!=' ')
+                        {
+                                if((int)msg[i]>96)
+                                {
+                                        c+=(char)((((a*(msg[i]-'a'))+b)%26)+'a');
+                                }
+                                else
+                                {
+                                        c+=(char)((((a*(msg[i]-'A'))+b)%26)+'A');
+                                }
+                        }
+                        else
+                        {
+                                c+=' ';
+                        }
+                }
+                return c;
+        }
+        public static String de(char[] msg,int a,int b)
+        {
+                String p="";
+                int a_inv=0;
+                int f=0;
+                for (int i=0;i<26;i++)
+                {
+                        f=(a*i)%26;
+                        if(f==1)
+                        {
+                                a_inv=i;
+                        }
+                }
+                for (int i=0;i<msg.length;i++)
+                {
+                        if(msg[i]!=' ')
+                        {
+                                if((int)msg[i]>96)
+                                {
+                                        int y=msg[i]-'a';
+                                        int x=(a_inv*(y-b));
+                                        x=((x %26)+26)%26;
+                                        p+=(char)(x+'a');
+                                }
+                                else
+                                {
+                                        int y=msg[i]-'A';
+                                        int x=(a_inv*(y-b));
+                                        x=((x%26)+26)%26;
+                                        p+=(char)(x+'A');
+                                }
+                        }
+                        else
+                        {
+                                p+=' ';
+                        }
+                }
+                return p;
+        }
+        public static void main(String args[])
+        {
+        String msg="Affine Cipher";
+        int a=17;
+        int b=20;
+        String cipher=en(msg.toCharArray(),a,b);
+        String plain=de(cipher.toCharArray(),a,b);
+        System.out.println("Encrypted msg:"+cipher);
+        System.out.println("Decrypted msg:"+plain);
+        }
+}
+
+
+public class VigenereCipher {
+        public static String encrypt(String plaintext, String key) {
+        StringBuilder ciphertext = new StringBuilder();
+        plaintext = plaintext.toUpperCase();
+        key = key.toUpperCase();
+        int keyIndex = 0;
+        for (char c : plaintext.toCharArray()) {
+            if (c >= 'A' && c <= 'Z') {
+                int shift = key.charAt(keyIndex % key.length()) - 'A';
+                char encrypted = (char) ((c - 'A' + shift) % 26 + 'A');
+                ciphertext.append(encrypted);
+                keyIndex++;
+            } else {
+                ciphertext.append(c);            }
+        }
+        return ciphertext.toString();
+    }
+    public static String decrypt(String ciphertext, String key) {
+        StringBuilder plaintext = new StringBuilder();
+        ciphertext = ciphertext.toUpperCase();
+        key = key.toUpperCase();
+        int keyIndex = 0;
+        for (char c : ciphertext.toCharArray()) {
+            if (c >= 'A' && c <= 'Z') {
+                int shift = key.charAt(keyIndex % key.length()) - 'A';
+                char decrypted = (char) ((c - 'A' - shift + 26) % 26 + 'A');
+                plaintext.append(decrypted);
+                keyIndex++;
+            } else {
+                plaintext.append(c); 
+            }
+        }
+        return plaintext.toString();
+    }
+    public static void main(String[] args) {
+        String plaintext = "HELLO WORLD";
+        String key = "KEY";
+        String encrypted = encrypt(plaintext, key);
+        String decrypted = decrypt(encrypted, key);
+        System.out.println("Plaintext:  " + plaintext);
+        System.out.println("Key:        " + key);
+        System.out.println("Encrypted:  " + encrypted);
+        System.out.println("Decrypted:  " + decrypted);
+    }
+}
+
+
+
+public class ShiftCipher {
+        public static String encrypt(String text, int shift) {
+        StringBuilder result = new StringBuilder();
+        for (char character : text.toCharArray()) {
+            if (Character.isUpperCase(character)) {
+                char ch = (char)(((int)character + shift - 65) % 26 + 65);
+                result.append(ch);
+            } else if (Character.isLowerCase(character)) {
+                char ch = (char)(((int)character + shift - 97) % 26 + 97);
+                result.append(ch);
+            } else {
+                result.append(character);             }
+        }
+        return result.toString();
+    }
+
+    public static String decrypt(String cipher, int shift) {
+        return encrypt(cipher, 26 - (shift % 26)); 
+    }
+    public static void main(String[] args) {
+        String original = "Hello World!";
+        int shift = 3;
+        String encrypted = encrypt(original, shift);
+        String decrypted = decrypt(encrypted, shift);
+        System.out.println("Original:  " + original);
+        System.out.println("Encrypted: " + encrypted);
+        System.out.println("Decrypted: " + decrypted);
+    }
+}
+
+
+public class SimpleHillCipher {
+        public static String encrypt(String pt, int[][] key) {
+        pt = pt.toUpperCase().replaceAll("[^A-Z]", "");
+        if (pt.length() % 2 != 0) pt += "X"; // pad
+        StringBuilder ct = new StringBuilder();
+        for (int i = 0; i < pt.length(); i += 2) {
+            int a = pt.charAt(i) - 'A';
+            int b = pt.charAt(i+1) - 'A';
+            int c1 = (key[0][0]*a + key[0][1]*b) % 26;
+            int c2 = (key[1][0]*a + key[1][1]*b) % 26;
+            ct.append((char)(c1 + 'A'));
+            ct.append((char)(c2 + 'A'));
+        }
+        return ct.toString();
+    }
+
+       static int modInverse(int a) {
+        for (int x = 1; x < 26; x++)
+            if ((a * x) % 26 == 1)
+                return x;
+        return 1; 
+    }
+
+       static int[][] inverseKey(int[][] k) {
+        int det = (k[0][0]*k[1][1] - k[0][1]*k[1][0]) % 26;
+        if (det < 0) det += 26;
+        int invDet = modInverse(det);
+        int[][] inv = new int[2][2];
+        inv[0][0] =  k[1][1] * invDet % 26;
+        inv[0][1] = -k[0][1] * invDet % 26;
+        inv[1][0] = -k[1][0] * invDet % 26;
+        inv[1][1] =  k[0][0] * invDet % 26;
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 2; j++)
+                if (inv[i][j] < 0) inv[i][j] += 26;
+        return inv;
+    }
+
+    public static String decrypt(String ct, int[][] key) {
+        int[][] inv = inverseKey(key);
+        StringBuilder pt = new StringBuilder();
+        for (int i = 0; i < ct.length(); i += 2) {
+            int a = ct.charAt(i) - 'A';
+            int b = ct.charAt(i+1) - 'A';
+            int p1 = (inv[0][0]*a + inv[0][1]*b) % 26;
+            int p2 = (inv[1][0]*a + inv[1][1]*b) % 26;
+            pt.append((char)(p1 + 'A'));
+            pt.append((char)(p2 + 'A'));
+        }
+        return pt.toString();
+    }
+
+    public static void main(String[] args) {
+        int[][] key = {{3, 3}, {2, 5}};
+        String msg = "HELLO";
+        String ct = encrypt(msg, key);
+        String pt = decrypt(ct, key);
+        System.out.println("Message:   " + msg);
+        System.out.println("Encrypted: " + ct);
+        System.out.println("Decrypted: " + pt);
+    }
+}

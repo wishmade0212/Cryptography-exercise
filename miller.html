@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Miller-Rabin Primality Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f5f6fa; }
+        .container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px #eee; max-width: 400px; margin:auto; }
+        input[type="number"] { padding: 8px; margin: 10px 0; width: 90%; }
+        button { padding: 10px 20px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; cursor:pointer;}
+        #result { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+  <h2>Miller-Rabin Primality Test</h2>
+  <input type="number" id="number" placeholder="Enter a number" min="2">
+  <button onclick="checkPrime()">Check Prime</button>
+  <div id="result"></div>
+  </div>
+  <script>
+    // Miller-Rabin implementation in JavaScript
+    function isPrime(n, k=5) {
+      if (n < 2) return false;
+      if (n !== Math.floor(n)) return false;
+      if (n === 2 || n === 3) return true;
+      if (n % 2 === 0) return false;
+
+      // Write n-1 as d * 2^r
+      let d = n - 1, r = 0;
+      while (d % 2 === 0) {
+        d /= 2;
+        r += 1;
+      }
+
+      function modPow(a, exp, mod) {
+        let res = 1;
+        a = a % mod;
+        while (exp > 0) {
+          if (exp % 2 === 1) res = (res * a) % mod;
+          a = (a * a) % mod;
+          exp = Math.floor(exp / 2);
+        }
+        return res;
+      }
+
+      for (let i = 0; i < k; i++) {
+        const a = 2 + Math.floor(Math.random() * (n - 3));
+        let x = modPow(a, d, n);
+        if (x === 1 || x === n - 1) continue;
+        let continueLoop = false;
+        for (let j = 0; j < r - 1; j++) {
+          x = modPow(x, 2, n);
+          if (x === n - 1) {
+            continueLoop = true;
+            break;
+          }
+        }
+        if (continueLoop) continue;
+        return false;
+      }
+      return true;
+    }
+
+    function checkPrime() {
+      const num = Number(document.getElementById('number').value);
+      const resultDiv = document.getElementById('result');
+      if (isNaN(num) || num < 2) {
+        resultDiv.textContent = "Please enter an integer greater than 1.";
+        return;
+      }
+      const probablePrime = isPrime(num, 8); // 8 rounds for better assurance
+      if (probablePrime) {
+        resultDiv.textContent = num + " is probably prime.";
+      } else {
+        resultDiv.textContent = num + " is composite.";
+      }
+    }
+  </script>
+</body>
+</html>

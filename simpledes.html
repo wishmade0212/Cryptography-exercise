@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simplified DES (S-DES) Step-by-Step Demo</title>
+    <style>
+        body
+        {
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: #f5f6fa; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .box
+        { 
+            background: #fff; 
+            padding: 32px 28px;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px #eee; 
+            width: 480px;
+            max-width:95vw;
+            margin:auto; 
+        }
+        input[type="number"]
+        { 
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.2px solid #cdd4ed;
+            border-radius: 5px;
+            font-size: 1em;
+            background: #f8faff;
+            margin-bottom: 2px; 
+        }
+        button
+        { 
+            padding: 10px 20px; 
+            background: #4CAF50; 
+            color: #fff; border: none; 
+            border-radius: 4px; 
+            cursor:pointer;
+        }
+        #result
+        { 
+            margin-top: 15px; 
+            font-weight: bold; 
+            padding: 16px 12px;
+            border: 1.5px solid #d0d7fa;
+            color: #222;
+            display: none;
+            word-break: break-all;
+        }
+        .steps {
+            background: #f9faff;
+            border: 1px solid #ccd8ff;
+            border-radius: 7px;
+            margin-top: 20px;
+            font-size: 0.98em;
+            line-height:1.82;
+            padding: 15px 10px 10px 20px;
+            color:#222;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Simple DES (S-DES) Encryptor with Steps</h2>
+    <form onsubmit="event.preventDefault(); encryptSdes();">
+        <label for="keyInput">Key (10 bits):</label>
+        <input id="keyInput" type="text" maxlength="10" placeholder="e.g. 1010000010" autocomplete="off"><br><br>
+        <label for="plaintextInput">Plaintext (8 bits):</label>
+        <input id="plaintextInput" type="text" maxlength="8" placeholder="e.g. 11010111" autocomplete="off"><br><br>
+        <button type="submit">Encrypt & Show Steps</button><br><br>
+    </form>
+    <div class="result" id="resultBox"></div>
+    <div class="steps" id="stepsBox"></div>
+</div>
+<script>
+// Permutation helpers
+function permute(input, perm) {
+    return perm.map(i => input[i - 1]).join('');
+}
+function leftShift(bits, n = 1) {
+    return bits.slice(n) + bits.slice(0, n);
+}
+function xor(a, b) {
+    let out = "";
+    for (let i = 0; i < a.length; i++) out += (a[i] ^ b[i]);
+    return out;
+}
+const S0 = [
+    ['01', '00', '11', '10'],
+    ['11', '10', '01', '00'],
+    ['00', '10', '01', '11'],
+    ['11', '01', '11', '10']
+];
+const S1 = [
+    ['00', '01', '10', '11'],
+    ['10', '00', '01', '11'],
+    ['11', '00', '01', '00'],
+    ['10', '01', '00', '11']
+];
+
+
+function StepsCollector() {
+    let htmlarr = [];
+    return {
+        add: function(title, detail) {
+            htmlarr.push(`<div class="step-block"><span class="steptitle">${title}:</span><br>${detail}</div>`);
+        },
+        html: function() {
+            return htmlarr.join('');
+        }
+    }
+}
+
+// S-DES key schedule: generate subkeys K1, K2
+function generateSubkeys(key, steps) {
+    const P10 = [3,5,2,7,4,10,1,9,8,6];
+    const P8 = [6,3,7,4,8,5,10,9];
+    steps.add('Key (input)', `<code>${key}</code>`);
+    let perm10 = permute(key, P10);
+    steps.add('Key after P10', `<code>${perm10}</code>`);
+    let L1 = perm10.slice(0,5), R1 = perm10.slice(5);
+    steps.add('Split left/right (L, R)', `<b>L:</b> <code>${L1}</code> &nbsp;&nbsp; <b>R:</b> <code>${R1}</code>`);
+    // LS-1 (Round 1)
+    let L2 = leftShift(L1,1), R2 = leftShift(R1,1);
+    steps.add('After LS-1', `<b>L:</b> <code>${L2}</code> &nbsp;&nbsp; <b>R:</b> <code>${R2}</code>`);
+    let K1 = permute(L2+R2, P8);
+    steps.add('K1 (after P8)', `<code>${K1}</code>`);
+    // LS-2 (Round 2)
+    let L3 = leftShift(L2,2), R3 = leftShift(R2,2);
+    steps.add('After LS-2', `<b>L:</b> <code>${L3}</code> &nbsp;&nbsp; <b>R:</b> <code>${R3}</code>`);
+    let K2 = permute(L3+R3, P8);
+    steps.add('K2 (after P8)', `<code>${K2}</code>`);
+    return [K1, K2];
+}
+function sbox(bits, S) {
+    let row = parseInt(bits[0] + bits[3], 2);
+    let col = parseInt(bits[1] + bits[2], 2);
+    return S[row][col];
+}
+
+// S-DES f_k function: records steps!
+function fk(bits, key, round, steps) {
+    let L = bits.slice(0,4), R = bits.slice(4,8);
+    steps.add(`Round ${round} - Input (L|R)`, `<code>${L} | ${R}</code>`);
+    const EP = [4,1,2,3,2,3,4,1];
+    let RE = permute(R, EP);
+    steps.add(`Round ${round} - Expand/Permutate (EP)`, `<code>${RE}</code>`);
+    let xored = xor(RE, key);
+    steps.add(`Round ${round} - After XOR with K${round}`, `<code>${xored}</code>`);
+    let XL = xored.slice(0,4), XR = xored.slice(4,8);
+    // S-Boxes
+    let s0out = sbox(XL, S0), s1out = sbox(XR, S1);
+    steps.add(`Round ${round} - S-Box output`, `<b>S0:</b> <code>${s0out}</code> &nbsp; <b>S1:</b> <code>${s1out}</code>`);
+    const P4 = [2,4,3,1];
+    let p4out = permute(s0out + s1out, P4);
+    steps.add(`Round ${round} - P4`, `<code>${p4out}</code>`);
+    let resultL = xor(L, p4out);
+    steps.add(`Round ${round} - XOR left with P4`, `<code>${resultL} | ${R}</code>`);
+    return resultL + R;
+}
+
+function encrypt(plainBits, key10, steps) {
+    const IP  = [2,6,3,1,4,8,5,7];
+    const IPi = [4,1,3,5,7,2,8,6];
+
+    // Key schedule steps
+    steps.add('    KEY GENERATION    ','');
+    const [K1, K2] = generateSubkeys(key10, steps);
+
+    // Initial Permutation
+    steps.add('    ENCRYPTION    ', '');
+    steps.add('Plaintext input', `<code>${plainBits}</code>`);
+    let ip = permute(plainBits, IP);
+    steps.add('Initial Permutation (IP)', `<code>${ip}</code>`);
+    // Round 1
+    let r1 = fk(ip, K1, 1, steps);
+    // Swap
+    let swapped = r1.slice(4,8) + r1.slice(0,4);
+    steps.add('Swap halves', `<code>${swapped}</code>`);
+    // Round 2
+    let r2 = fk(swapped, K2, 2, steps);
+    // Inverse IP
+    let cip = permute(r2, IPi);
+    steps.add('Inverse Initial Permutation (IP⁻¹)', `<code>${cip}</code>`);
+    return cip;
+}
+function isValidBinary(str, expectedLength) {
+    return str.length === expectedLength && /^[01]+$/.test(str);
+}
+function encryptSdes() {
+    const key = document.getElementById("keyInput").value.trim();
+    const plain = document.getElementById("plaintextInput").value.trim();
+    const resultBox = document.getElementById("resultBox");
+    const stepsBox = document.getElementById("stepsBox");
+    stepsBox.innerHTML = '';
+    if (!isValidBinary(key, 10)) {
+        showResult("Please enter a 10-bit key using only 0 and 1.", '');
+        return;
+    }
+    if (!isValidBinary(plain, 8)) {
+        showResult("Please enter an 8-bit plaintext using only 0 and 1.", '');
+        return;
+    }
+    // Steps collection
+    let steps = StepsCollector();
+    const ciphertext = encrypt(plain, key, steps);
+    showResult(`Ciphertext: <strong>${ciphertext}</strong>`, steps.html());
+}
+function showResult(msg, steps) {
+    const resultBox = document.getElementById("resultBox");
+    resultBox.innerHTML = msg;
+    resultBox.style.display = "block";
+    if (steps) {
+        document.getElementById("stepsBox").innerHTML = steps;
+        document.getElementById("stepsBox").style.display = "block";
+    }
+}
+</script>
+</body>
+</html>

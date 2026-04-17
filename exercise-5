@@ -1,0 +1,84 @@
+import java.util.Scanner;
+public class CustomRSANoBigInt {
+    static long gcd(long a, long b) {
+        if (b == 0) return a;
+        return gcd(b, a % b);
+    }
+    static long power(long base, long exp, long mod) {
+        long result = 1;
+        for (int i = 0; i < exp; i++) {
+            result = (result * base) % mod; 
+        } 
+        return result;
+    }
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter first prime number (p): ");
+        long p = sc.nextLong();
+        System.out.print("Enter second prime number (q): ");
+        long q = sc.nextLong();
+        System.out.print("Enter a message (as a number): ");
+        long message = sc.nextLong();
+        long n = p * q;
+        long phi = (p - 1) * (q - 1);
+        long e = 2;
+        while (e < phi) {
+            if (gcd(e, phi) == 1) {
+                break;
+            }
+            e++;
+        }
+        long d = 1;
+        while ((d * e) % phi != 1) {
+            d++;
+        }
+        System.out.println("\n--- RSA Keys ---");
+        System.out.println("Public Key (e, n):  (" + e + ", " + n + ")");
+        System.out.println("Private Key (d, n): (" + d + ", " + n + ")");
+        long ciphertext = power(message, e, n);
+        System.out.println("\nEncrypted Message: " + ciphertext);
+        long decryptedMessage = power(ciphertext, d, n);
+        System.out.println("Decrypted Message: " + decryptedMessage);
+        sc.close();
+    }
+}
+
+import java.util.Scanner;
+public class DiffieHellman {
+    static long power(long base, long exp, long mod) {
+        long result = 1;
+        for (int i = 0; i < exp; i++) {
+            result = (result * base) % mod; 
+        }
+        return result;
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter a prime number (P): ");
+        long p = sc.nextLong();
+        System.out.print("Enter a primitive root of P (G): ");
+        long g = sc.nextLong();
+        System.out.print("Enter Alice's private key (a): ");
+        long a = sc.nextLong();
+        long x = power(g, a, p); 
+        System.out.print("Enter Bob's private key (b): ");
+        long b = sc.nextLong();
+        long y = power(g, b, p); 
+        System.out.println("\n--- Key Exchange ---");
+        System.out.println("Alice publicly sends: " + x);
+        System.out.println("Bob publicly sends:   " + y);
+        long aliceSharedSecret = power(y, a, p); 
+        long bobSharedSecret = power(x, b, p);   
+        System.out.println("\n--- Result ---");
+        System.out.println("Alice's computed secret: " + aliceSharedSecret);
+        System.out.println("Bob's computed secret:   " + bobSharedSecret);
+        if (aliceSharedSecret == bobSharedSecret) {
+            System.out.println("Success! Both share the identical secret key.");
+        } else {
+            System.out.println("Error: Keys do not match.");
+        }
+        sc.close();
+    }
+}
+

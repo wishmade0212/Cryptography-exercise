@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RSA Algorithm Step-by-Step Demo</title>
+  <style>
+    body {
+      background: #f5f8fe;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin-top: 50px;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #acbae730;
+      max-width: 420px;
+      width: 95%;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px 0;
+      font-weight: 500;
+      color: #222;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d5dbe0;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .output { 
+      background: #fff; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      margin-top: 15px; 
+    }
+    .step { 
+      margin-bottom: 8px; 
+    }
+  </style>
+</head>
+<body>
+  <h1>RSA Algorithm: Step-by-Step Demo</h1>
+  <div class="container">
+    <label>Enter two distinct prime numbers (p, q):</label>
+    <input type="number" id="pInput" min="2" value="11" >
+    <input type="number" id="qInput" min="2" value="13" >
+    <br>
+    <label>Enter public exponent e (coprime with φ(n)):</label>
+    <input type="number" id="eInput" value="7" >
+    <label>Enter plaintext message (integer):</label>
+    <input type="number" id="mInput" value="9" >
+    <br>
+    <button onclick="rsaDemo()">Show RSA Steps</button>
+  </div>
+  <div class="output" id="output"></div>
+<script>
+function gcd(a, b) {
+  if (!b) return a;
+  return gcd(b, a % b);
+}
+function egcd(a, b) { // Extended GCD for modular inverse
+  if (a === 0) return {g: b, x: 0, y: 1};
+  let {g, x, y} = egcd(b % a, a);
+  return {g: g, x: y - Math.floor(b / a) * x, y: x};
+}
+function modInverse(e, phi) {
+  let {g, x} = egcd(e, phi);
+  if (g !== 1) return null;
+  return (x % phi + phi) % phi;
+}
+function modPow(b, e, m) {
+  let res = 1;
+  b = b % m;
+  while (e > 0) {
+    if (e % 2 === 1) res = (res * b) % m;
+    e = Math.floor(e/2);
+    b = (b * b) % m;
+  }
+  return res;
+}
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i=2; i*i<=n; ++i) if (n%i===0) return false;
+  return true;
+}
+function rsaSteps(p, q, e, m) {
+  let steps = [];
+  steps.push(`<b>Step 1:</b> <b>Choose two distinct primes p and q.</b>`);
+  if (!isPrime(p) || !isPrime(q)) {
+    steps.push(`<b style="color:red;">Error: p and q must both be prime numbers.</b>`);
+    return steps.join("<hr>");
+  }
+  if (p === q) {
+    steps.push(`<b style="color:red;">Error: p and q must be distinct.</b>`);
+    return steps.join("<hr>");
+  }
+  steps.push(`<b>Given:</b> p = <b>${p}</b>, q = <b>${q}</b>`);
+  const n = p * q;
+  steps.push(`<b>Step 2:</b> <b>Compute n = p × q = ${p} × ${q} = <b>${n}</b></b>`);
+  const phi = (p - 1) * (q - 1);
+  steps.push(`<b>Step 3:</b> <b>Compute Euler's totient: φ(n) = (p-1) × (q-1) = (${p}-1) × (${q}-1) = ${p-1} × ${q-1} = <b>${phi}</b></b>`);
+  steps.push(`<b>Step 4:</b> <b>Choose e such that 1 &lt; e &lt; φ(n) and gcd(e, φ(n)) = 1.</b>`);
+  steps.push(`You chose: e = <b>${e}</b><br>gcd(${e}, ${phi}) = <b>${gcd(e, phi)}</b>`);
+  if (gcd(e, phi) !== 1)
+    steps.push(`<b style="color:red;">Error: e must be coprime to φ(n).</b>`);
+  else {
+    steps.push(`<b>Step 5:</b> <b>Compute d, the modular inverse of e mod φ(n):</b><br> Find d such that (d × e) mod φ(n) = 1`);
+    const d = modInverse(e, phi);
+    if (d === null)
+      steps.push(`<b style="color:red;">Error: No modular inverse exists for e and φ(n).</b>`);
+    else {
+      steps.push(`The modular inverse of ${e} mod ${phi} is <b>${d}</b> because (${d} × ${e}) mod ${phi} = ${(d*e)%phi} mod ${phi} = 1`);
+      steps.push(`<b>Step 6:</b> <b>Public key (n, e):</b> (<b>${n}</b>, <b>${e}</b>)<br><b>Private key (n, d):</b> (<b>${n}</b>, <b>${d}</b>)`);
+      steps.push(`<b>Step 7:</b> <b>Encrypt plaintext m using ciphertext c = m^e mod n.</b>`);
+      let c = modPow(m, e, n);
+      steps.push(` m = <b>${m}</b><br> c = ${m}<sup>${e}</sup> mod ${n} = ${modPow(m, e, n)}`);
+      steps.push(`<b>Encrypted ciphertext: <span >${c}</span></b>`);
+      steps.push(`<b>Step 8:</b> <b>Decrypt ciphertext c using plaintext m = c^d mod n.</b>`);
+      let m2 = modPow(c, d, n);
+      steps.push(` m = ${c}<sup>${d}</sup> mod ${n} = ${m2}`);
+      steps.push(`<b>Decrypted message: <span >${m2}</span></b>`);
+    }
+  }
+  return steps.join("<hr>");
+}
+function rsaDemo() {
+  let p = parseInt(document.getElementById("pInput").value);
+  let q = parseInt(document.getElementById("qInput").value);
+  let e = parseInt(document.getElementById("eInput").value);
+  let m = parseInt(document.getElementById("mInput").value);
+  document.getElementById("output").innerHTML = rsaSteps(p, q, e, m);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<html>
+<head>
+    <title>Affine Cipher Encrypt/Decrypt</title>
+    <style>
+        body {
+      background: #f5f8fe;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin-top: 50px;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #acbae730;
+      max-width: 420px;
+      width: 95%;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px 0;
+      font-weight: 500;
+      color: #222;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d5dbe0;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .result { 
+      background: #fff; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      margin-top: 15px; 
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Affine Cipher</h2>
+        <label>Message:</label>
+        <input type="text" id="msg" placeholder="Enter your message here">
+        <label>Key a:</label>
+        <input type="number" id="a" value="17" min="1" max="25">
+        <label>Key b:</label>
+        <input type="number" id="b" value="20" min="0" max="25">
+        <br>
+        <button onclick="encrypt()">Encrypt Text</button>
+        <button onclick="decrypt()">Decrypt Text</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function encrypt()
+        {
+            const msg = document.getElementById('msg').value;
+            const a = parseInt(document.getElementById('a').value);
+            const b = parseInt(document.getElementById('b').value);
+            let c = "";
+            for (let i = 0; i < msg.length; i++)
+            {
+                let ch = msg[i];
+                if (ch !== ' ')
+                {
+                    if (ch >= 'a' && ch <= 'z') 
+                    {
+                        let val = ch.charCodeAt(0) - 'a'.charCodeAt(0);
+                        c += String.fromCharCode(((a * val + b) % 26) + 'a'.charCodeAt(0));
+                    } 
+                    else if (ch >= 'A' && ch <= 'Z') 
+                    {
+                        let val = ch.charCodeAt(0) - 'A'.charCodeAt(0);
+                        c += String.fromCharCode(((a * val + b) % 26) + 'A'.charCodeAt(0));
+                    } 
+                    else 
+                    {
+                        c += ch;
+                    }
+                } 
+                else 
+                {
+                    c+=' ';
+                }
+            }
+            document.getElementById('result').textContent = "Encrypted msg: " + c;
+        }
+        function modInverse(a, m) {
+            a = ((a % m) + m) % m;
+            for (let x = 1; x < m; x++) {
+                if ((a * x) % m === 1)
+                    return x;
+            }
+            return null;
+        }
+        function decrypt() {
+            const msg = document.getElementById('msg').value;
+            const a = parseInt(document.getElementById('a').value);
+            const b = parseInt(document.getElementById('b').value);
+            let p = "";
+            const a_inv = modInverse(a, 26);
+
+            if (a_inv === null) {
+                document.getElementById('result').textContent = "Key 'a' is not invertible mod 26 (choose a coprime to 26)";
+                return;
+            }
+
+            for (let i = 0; i < msg.length; i++) {
+                let ch = msg[i];
+                if (ch !== ' ') {
+                    if (ch >= 'a' && ch <= 'z') {
+                        let y = ch.charCodeAt(0) - 'a'.charCodeAt(0);
+                        let x = a_inv * (y - b);
+                        x = ((x % 26) + 26) % 26;
+                        p += String.fromCharCode(x + 'a'.charCodeAt(0));
+                    } else if (ch >= 'A' && ch <= 'Z') {
+                        let y = ch.charCodeAt(0) - 'A'.charCodeAt(0);
+                        let x = a_inv * (y - b);
+                        x = ((x % 26) + 26) % 26;
+                        p += String.fromCharCode(x + 'A'.charCodeAt(0));
+                    } else {
+                        p += ch;
+                    }
+                } else {
+                    p += ' ';
+                }
+            }
+            document.getElementById('result').textContent = "Decrypted msg: " + p;
+        }
+    </script>
+</body>
+</html>

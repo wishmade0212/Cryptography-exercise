@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vigenere Cipher</title>
+  <style>
+    body {
+      background: #f5f8fe;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin-top: 50px;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #acbae730;
+      max-width: 420px;
+      width: 95%;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px 0;
+      font-weight: 500;
+      color: #222;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d5dbe0;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .output {
+      margin-top: 18px;
+      background: #f1f4fa;
+      padding: 14px 12px;
+      border-radius: 7px;
+      font-family: 'Fira Mono', monospace;
+      color: #222;
+      word-break: break-word;
+    }
+    .key-stream {
+      font-size: 0.97em;
+      color: #222;
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Vigenere Cipher</h2>
+    <label for="mode">Mode:</label>
+    <select id="mode">
+      <option value="encrypt">Encryption</option>
+      <option value="decrypt">Decryption</option>
+    </select>
+
+    <label id="textLabel" for="text">Plain Text:</label>
+    <textarea id="text" rows="3" placeholder="Enter text..."></textarea>
+
+    <label for="key">Key:</label>
+    <input type="text" id="key" placeholder="Enter key..."/>
+
+    <button onclick="processVigenere()">Process</button>
+
+    <div class="output" id="result" style="display:none;">
+      <div class="key-stream" id="keyStream"></div>
+      <div id="outputText"></div>
+    </div>
+  </div>
+
+<script>
+function vigenere(text, key, mode) {
+    text = text.replace(/[^A-Za-z]/g, '').toUpperCase();
+    key = key.replace(/[^A-Za-z]/g, '').toUpperCase();
+    if(key.length === 0 || text.length === 0) return ['', ''];
+    // Generate key stream
+    let keyStream = '';
+    if(text.length > key.length) {
+        let div = Math.floor(text.length / key.length);
+        let rem = text.length % key.length;
+        keyStream = key.repeat(div) + key.slice(0, rem);
+    } else {
+        keyStream = key.slice(0, text.length);
+    }
+
+    let result = '';
+    for(let i=0; i<text.length; i++) {
+        if(mode === 'encrypt') {
+            let x = (text.charCodeAt(i) + keyStream.charCodeAt(i)) % 26;
+            result += String.fromCharCode(x + 97);
+        } else {
+            let x = (text.charCodeAt(i) - keyStream.charCodeAt(i) + 26) % 26;
+            result += String.fromCharCode(x + 97);
+        }
+    }
+    return [keyStream, result];
+}
+
+document.getElementById("mode").addEventListener("change", function() {
+    let mode = document.getElementById("mode").value;
+    document.getElementById("textLabel").innerText =
+      mode === "encrypt" ? "Plain Text:" : "Text to be Decrypted:";
+});
+
+function processVigenere() {
+    let text = document.getElementById("text").value;
+    let key = document.getElementById("key").value;
+    let mode = document.getElementById("mode").value;
+    let [keyStream, result] = vigenere(text, key, mode);
+
+    let outputLabel = (mode === 'encrypt') ? "Encrypted Cipher Text" : "Decrypted Cipher Text";
+    document.getElementById("keyStream").innerHTML = "<b>Key Stream:</b> " + (keyStream ? keyStream : "<span style='color:#cf2b2b'>Invalid Key or Text</span>");
+    if(keyStream.length === 0) {
+      document.getElementById("outputText").innerHTML = "<span style='color:#cf2b2b'>Please enter valid text and key (letters only).</span>";
+    } else {
+      document.getElementById("outputText").innerHTML = `<b>${outputLabel}:</b> ${result}`;
+    }
+    document.getElementById("result").style.display = "block";
+}
+</script>
+</body>
+</html>

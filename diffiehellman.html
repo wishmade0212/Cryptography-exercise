@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Diffie-Hellman Key Exchange - Step by Step</title>
+  <style>
+    body {
+      background: #f5f8fe;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin-top: 50px;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #acbae730;
+      max-width: 420px;
+      width: 95%;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px 0;
+      font-weight: 500;
+      color: #222;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d5dbe0;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .output { 
+      background: #fff; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      margin-top: 15px; 
+    }
+    .step { 
+      margin-bottom: 8px; 
+    }
+  </style>
+</head>
+<body>
+    <div class="container">
+  <h1>Diffie-Hellman Key Exchange</h1>
+  <label>Prime number (<b>p</b>): </label>
+  <input type="number" id="pInput" min="2" value="23" >
+  <label>Primitive root (<b>g</b>): </label>
+  <input type="number" id="gInput" min="2" value="5" >
+  <label>Alice's secret key (<b>a</b>): </label>
+  <input type="number" id="aInput" min="1" value="6" >
+  <label>Bob's secret key (<b>b</b>): </label>
+  <input type="number" id="bInput" min="1" value="15" >
+  <br>
+  <button onclick="runDH()">Compute Diffie-Hellman Steps</button>
+  </div>
+  <div class="output" id="output"></div>
+<script>
+function modPow(base, exp, mod) {
+  let r = 1n, b = BigInt(base), e = BigInt(exp), m = BigInt(mod);
+  b = b % m;
+  while (e > 0) {
+    if (e % 2n === 1n) r = (r * b) % m;
+    b = (b * b) % m;
+    e = e / 2n;
+  }
+  return r;
+}
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i = 2; i*i <= n; ++i) if (n % i === 0) return false;
+  return true;
+}
+function dhSteps(p, g, a, b) {
+  let steps = [];
+  if (!isPrime(p)) {
+    steps.push(`<b style="color:red">Error: p must be a prime number.</b>`);
+    return steps.join("<hr>");
+  }
+  steps.push(`<b>Step 1:</b> Choose a large prime number <code>p</code> and a primitive root <code>g</code> modulo <code>p</code>.<br>Given: <code>p = ${p}, g = ${g}</code>`);
+  steps.push(`<b>Step 2:</b> <span class="alice">Alice</span> chooses secret key <code>a = ${a}</code> (1 &lt; a &lt; p)`);
+  steps.push(`<b>Step 3:</b> <span class="bob">Bob</span> chooses secret key <code>b = ${b}</code> (1 &lt; b &lt; p)`);
+  // Alice computes A = g^a mod p
+  let A = modPow(g, a, p);
+  steps.push(`<b>Step 4:</b> <span class="alice">Alice</span> computes public value <span ><code>A = g^a mod p = ${g}^${a} mod ${p} = ${A}</code></span>`);
+  // Bob computes B = g^b mod p
+  let B = modPow(g, b, p);
+  steps.push(`<b>Step 5:</b> <span class="bob">Bob</span> computes public value <span ><code>B = g^b mod p = ${g}^${b} mod ${p} = ${B}</code></span>`);
+  steps.push(`<b>Step 6:</b> <span class="alice">Alice</span> and <span class="bob">Bob</span> exchange their public values A and B.`);
+  // Alice computes shared secret: S = B^a mod p
+  let S_Alice = modPow(B, a, p);
+  steps.push(`<b>Step 7A:</b> <span class="alice">Alice</span> computes shared secret <span class="secret"><code>S = B^a mod p = ${B}^${a} mod ${p} = ${S_Alice}</code></span>`);
+  // Bob computes shared secret: S = A^b mod p
+  let S_Bob = modPow(A, b, p);
+  steps.push(`<b>Step 7B:</b> <span class="bob">Bob</span> computes shared secret <span class="secret"><code>S = A^b mod p = ${A}^${b} mod ${p} = ${S_Bob}</code></span>`);
+  steps.push(`<b>Step 8:</b> Both parties arrive at the same shared secret: <span class="secret">${S_Alice}</span>`);
+  return steps.join('<hr>');
+}
+function runDH() {
+  let p = parseInt(document.getElementById("pInput").value);
+  let g = parseInt(document.getElementById("gInput").value);
+  let a = parseInt(document.getElementById("aInput").value);
+  let b = parseInt(document.getElementById("bInput").value);
+  document.getElementById("output").innerHTML = dhSteps(p, g, a, b);
+}
+</script>
+</body>
+</html>

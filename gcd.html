@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Euclidean Algorithm GCD Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f6fa; }
+        .container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px #eee; max-width: 400px; margin:auto; }
+        input[type="number"] { padding: 8px; margin: 10px 0; width: 90%; }
+        button { padding: 10px 20px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; cursor:pointer;}
+        #result { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Euclidean Algorithm - GCD Calculator</h2>
+        <label for="num1">Enter First Number:</label><br>
+        <input id="num1" type="number" min="0" required><br>
+        <label for="num2">Enter Second Number:</label><br>
+        <input id="num2" type="number" min="0" required><br>
+        <button onclick="calculateGCD()">Calculate GCD</button>
+        <div id="result"></div>
+    </div>
+    <script>
+        function calculateGCD() {
+            let a = parseInt(document.getElementById('num1').value);
+            let b = parseInt(document.getElementById('num2').value);
+            let resultDiv = document.getElementById('result');
+
+            if(isNaN(a) || isNaN(b) || a < 0 || b < 0) {
+                resultDiv.textContent = "Please enter two valid non-negative numbers.";
+                return;
+            }
+            if(a === 0 && b === 0) {
+                resultDiv.textContent = "GCD is not defined when both numbers are zero.";
+                return;
+            }
+
+            let steps = [];
+            let tempA = a, tempB = b;
+            while(b !== 0) {
+                steps.push(`${tempA} % ${tempB} = ${tempA % tempB}`);
+                let temp = b;
+                b = a % b;
+                a = temp;
+                tempA = a;
+                tempB = b;
+            }
+
+            let output = `GCD is ${a}.<br><br><strong>Steps:</strong><br>` + steps.join("<br>");
+            resultDiv.innerHTML = output;
+        }
+    </script>
+</body>
+</html>

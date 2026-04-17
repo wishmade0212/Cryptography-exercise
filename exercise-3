@@ -1,0 +1,135 @@
+import java.util.Scanner;
+public class MillerRabin {
+    static long power(long base, long exp, long mod) {
+        long result = 1;
+        base = base % mod;
+        while (exp > 0) {
+            if (exp % 2 == 1) result = (result * base) % mod;
+            exp = exp / 2;
+            base = (base * base) % mod;
+        }
+        return result;
+    }
+    static boolean isPrime(long n, int k) {
+        if (n <= 1 || n == 4) return false;
+        if (n <= 3) return true;
+        if (n % 2 == 0) return false;
+        long d = n - 1;
+        while (d % 2 == 0) {
+            d /= 2;
+        }
+        for (int i = 0; i < k; i++) {
+            long a = 2 + (long)(Math.random() * (n - 3));
+            long x = power(a, d, n);
+            if (x == 1 || x == n - 1) continue; 
+            long tempD = d;
+            while (tempD != n - 1) {
+                x = (x * x) % n;
+                tempD *= 2;
+                if (x == 1) return false; 
+                if (x == n - 1) break;    
+            }
+            if (x != n - 1) return false; 
+        }
+        return true; 
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter a number to check for primality: ");
+        long n = sc.nextLong();
+        int iterations = 5; 
+        if (isPrime(n, iterations)) {
+            System.out.println(n + " is PRIME.");
+        } else {
+            System.out.println(n + " is COMPOSITE (Not Prime).");
+        }
+        sc.close();
+    }
+}
+
+
+import java.util.Scanner;
+public class EuclideanAlgorithm {
+    public static int gcd(int a, int b) {
+        if (b == 0) {
+            return a;
+        }
+        return gcd(b, a % b);
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter first number: ");
+        int num1 = sc.nextInt();
+        System.out.print("Enter second number: ");
+        int num2 = sc.nextInt();
+        int result = gcd(num1, num2);
+        System.out.println("The GCD of " + num1 + " and " + num2 + " is: " + result);
+        sc.close();
+    }
+}
+
+import java.util.HashSet;
+import java.util.Scanner;
+public class PrimitiveRoot {
+    static long power(long base, long exp, long mod) {
+        long res = 1;
+        base = base % mod;
+        while (exp > 0) {
+            if (exp % 2 == 1) res = (res * base) % mod;
+            exp = exp / 2;
+            base = (base * base) % mod;
+        }
+        return res;
+    }
+    static int findPrimitiveRoot(int p) {
+        int phi = p - 1;
+        HashSet<Integer> factors = new HashSet<>();
+        int n = phi;
+        for (int i = 2; i * i <= n; i++) {
+            if (n % i == 0) {
+                factors.add(i);
+                while (n % i == 0) n /= i; 
+            }
+        }
+        if (n > 1) factors.add(n); 
+        for (int r = 2; r <= p - 1; r++) {
+            boolean isPrimitive = true;
+            for (int factor : factors) {
+                if (power(r, phi / factor, p) == 1) {
+                    isPrimitive = false;
+                    break;
+                }
+            }
+            if (isPrimitive) return r; 
+        }
+        return -1;
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);       
+        System.out.print("Enter a prime number: ");
+        int p = sc.nextInt();      
+        int root = findPrimitiveRoot(p);       
+        if (root != -1) {
+            System.out.println("The smallest primitive root of " + p + " is: " + root);
+        } else {
+            System.out.println("No primitive root found.");
+        }
+        sc.close();
+    }
+}
+
+
+    static void fermatFactor(int n) {
+        if (n % 2 == 0) return;
+        int a = (int) Math.ceil(Math.sqrt(n));
+        int b2 = a * a - n;
+        while (Math.sqrt(b2) != (int) Math.sqrt(b2)) {
+            a++;
+            b2 = a * a - n;
+        }
+        int b = (int) Math.sqrt(b2);
+        System.out.println("Factors of " + n + " are: " + (a - b) + " and " + (a + b));
+    }
+
+
+

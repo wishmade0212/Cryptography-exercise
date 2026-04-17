@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Playfair Cipher Demo</title>
+  <style>
+    body {
+      background: #f5f8fe;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin-top: 50px;
+      padding: 32px 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #acbae730;
+      max-width: 420px;
+      width: 95%;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px 0;
+      font-weight: 500;
+      color: #222;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d5dbe0;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .output { 
+      background: #fff; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      margin-top: 15px; 
+    }
+    .step { 
+      margin-bottom: 8px; 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+  <h1>Playfair Cipher Encryption Steps</h1>
+  <label>Key:</label>
+  <input type="text" id="keyInput" value="keyword"/>
+  <label>Plaintext:</label>
+  <textarea id="plainInput" rows="3">Hide the gold in the tree stump</textarea>
+  <button onclick="runPlayfair()">Encrypt and Show Steps</button>
+  <div class="output" id="output"></div>
+  </div>
+<script>
+function prepareInput(str) {
+  str = str.toUpperCase().replace(/[^A-Z]/g, '').replace(/J/g, 'I');
+  let result = "";
+  for (let i = 0; i < str.length; i += 2) {
+    result += str[i];
+    if (str[i+1] === str[i]) {
+      result += "X";
+      i--; // retry the same letter for next pair
+    } else if (str[i+1]) {
+      result += str[i+1];
+    }
+  }
+  if (result.length % 2) result += 'X';
+  return result;
+}
+
+function buildMatrix(key) {
+  key = key.toUpperCase().replace(/[^A-Z]/g, '').replace(/J/g, 'I');
+  let seen = {}, matrix = "", table = [];
+  for (const c of key + "ABCDEFGHIKLMNOPQRSTUVWXYZ") {
+    if (!seen[c]) { matrix += c; seen[c] = true; }
+  }
+  for (let i = 0; i < 5; ++i) table.push(matrix.slice(i*5, i*5+5).split(''));
+  return table;
+}
+
+function findPosition(matrix, c) {
+  for (let row=0; row<5; ++row)
+    for (let col=0; col<5; ++col)
+      if (matrix[row][col] === c) return {row, col};
+}
+
+function playfairSteps(pt, key) {
+  let matrix = buildMatrix(key);
+  let pairs = [];
+  let prepared = prepareInput(pt);
+  for (let i=0; i<prepared.length; i+=2)
+    pairs.push(prepared.slice(i,i+2));
+  let steps = [];
+  steps.push(`<b>Playfair Matrix:</b><pre>${matrix.map(r=>r.join(' ')).join('\n')}</pre>`);
+  steps.push(`<b>Prepared Plaintext:</b> ${prepared} (pairs: ${pairs.join(' ')})`);
+  let cipher = "";
+  pairs.forEach((pair, idx) => {
+    let a = pair[0], b = pair[1];
+    let pa = findPosition(matrix, a), pb = findPosition(matrix, b);
+    let rule, encA, encB;
+    if (pa.row === pb.row) {
+      encA = matrix[pa.row][(pa.col+1)%5]; encB = matrix[pb.row][(pb.col+1)%5];
+      rule = `Same row: shift right`;
+    } else if (pa.col === pb.col) {
+      encA = matrix[(pa.row+1)%5][pa.col]; encB = matrix[(pb.row+1)%5][pb.col];
+      rule = `Same column: shift down`;
+    } else {
+      encA = matrix[pa.row][pb.col]; encB = matrix[pb.row][pa.col];
+      rule = `Rectangle: swap columns`;
+    }
+    cipher += encA + encB;
+    steps.push(
+      `<div class='step'>
+        <b>Pair:</b> ${a}${b}<br>
+        Location: ${a}(${pa.row+1},${pa.col+1}), ${b}(${pb.row+1},${pb.col+1})<br>
+        <b>Rule:</b> ${rule}<br>
+        <b>Cipher:</b> ${a}${b} → ${encA}${encB}
+      </div>`
+    );
+  });
+  steps.push(`<b>Final Ciphertext:</b> ${cipher}`);
+  return steps.join("<hr>");
+}
+
+function runPlayfair() {
+  const pt = document.getElementById("plainInput").value;
+  const key = document.getElementById("keyInput").value;
+  document.getElementById("output").innerHTML = playfairSteps(pt, key);
+}
+</script>
+</body>
+</html>
